@@ -1,0 +1,10 @@
+# Compiled files
+*.o
+*.out
+
+# Executables
+Engine/calculator
+Engine/tests/token_test
+
+# Build directories
+build/
