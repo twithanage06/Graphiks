@@ -14,22 +14,48 @@ double Parser::parseFactor(){
     }
 
     const Token& current_val = tokens[position];
-    if (current_val.type == TokenType::Subtract) {
-    position++;
-    return -parseFactor();
+    if (current_val.type == TokenType::LeftParam) { //Parenthesiss
+        position++;
+        if (position < tokens.size() && tokens[position].type == TokenType::RightParam) {
+            throw runtime_error("Empty Parenthesis");
+        }
+        double result = parseExpression();
+        if(position >= tokens.size() || tokens[position].type != TokenType::RightParam){
+            throw runtime_error("No closing parenthesis");
+        } 
+        
+        position++;
+        return result;
     }
-    
-    if (current_val.type == TokenType::Number){
+    else if (current_val.type == TokenType::Subtract) { //Negative sign
+        position++;
+        return -parseFactor();
+    }
+    else if (current_val.type == TokenType::Number){ //Detected a number (lowest in the hierarchy)
         double value = current_val.value;
         position++;
         return value;
     }
-
     throw runtime_error("Expected a number");
 }
 
-double Parser::parseTerm() {
+
+double Parser::parseExponent() {
     double left = parseFactor();
+
+    if (position < tokens.size() && tokens[position].type == TokenType::Exponent) {
+        position++;
+
+        double right = parseExponent();
+
+        left = exponent(left, right);
+    }
+
+    return left;
+}
+
+double Parser::parseTerm() {
+    double left = parseExponent();
 
     while (position < tokens.size()) {
         TokenType op = tokens[position].type;
@@ -40,12 +66,12 @@ double Parser::parseTerm() {
 
         position++;
 
-        double right = parseFactor();
+        double right = parseExponent();
         if (op == TokenType::Multiply){
             left = mult(left, right);
         }
         else if (op == TokenType::Divide) {
-            left = div(left, right);
+            left = divi(left, right);
         }
 
     }
@@ -78,9 +104,12 @@ double Parser::parseExpression() {
 }
 
 double Parser::parse() {
-    double result = parseExpression();
+    double result = parseExpression(); //Equate using recursion
 
     if (position != tokens.size()) {
+        if (tokens[position].type == TokenType::RightParam) {
+            throw runtime_error("Missing opening parenthesis");
+        }
         throw runtime_error("Unexpected token");
     }
 

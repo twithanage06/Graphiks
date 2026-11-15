@@ -29,6 +29,10 @@ vector<Token> tokenise(const string& expression){
                 op = '/';
                 operator_flag = true;
                 break;
+            case '^':
+                op = '^';
+                operator_flag = true;
+                break;
             case '(':
                 op = '(';
                 operator_flag = true;
@@ -60,6 +64,9 @@ vector<Token> tokenise(const string& expression){
                     break;
                 case '/':
                     tokens.push_back({TokenType::Divide});
+                    break;
+                case '^':
+                    tokens.push_back({TokenType::Exponent});
                     break;
                 case '(':
                     tokens.push_back({TokenType::LeftParam});

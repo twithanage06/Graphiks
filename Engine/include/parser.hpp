@@ -11,7 +11,9 @@ private:
 
     double parseExpression();
     double parseTerm();
+    double parseExponent();
     double parseFactor();
+    
 
 public:
     explicit Parser(const std::vector<Token>& tokens);
