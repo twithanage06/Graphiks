@@ -1,6 +1,9 @@
 #include "parser.hpp"
 #include "evaluator.hpp"
+#include "ast.hpp"
 
+#include <memory>
+#include <type_traits>
 
 using namespace std;
 
@@ -14,141 +17,149 @@ void Parser::expect(TokenType type, const string& error) {
     position++;
 }
 
-double Parser::parsePrimary(){
-    if (position >= tokens.size()){
+unique_ptr<Node> Parser::parsePrimary(){
+    if (position >= tokens.size()){ //To protect against an invalid positions
         throw runtime_error("Position greater than token length");
     }
 
     const Token& current_val = tokens[position];
+    if (current_val.type == TokenType::Root){ //roots
 
-    if (current_val.type == TokenType::Root) {
+        auto root = make_unique<Node>(); //Make root node
+        root->type = NodeType::Root;
+
         position++;
-
         expect(TokenType::LeftParam, "Expected '(' after root");
 
-        double a = parseExpression();
+        root->left = parseExpression(); //Make left side expression
 
         expect(TokenType::Comma, "Expected comma");
 
-        double q = parseExpression();
+        root->right = parseExpression(); //Make right side expression
 
         expect(TokenType::RightParam, "Expected ')' after root");
 
-        //Check for 1. valid number 2. Integer 3. can fit in a C++ int
-        if (!std::isfinite(q) || std::trunc(q) != q || q < std::numeric_limits<int>::min() || q > std::numeric_limits<int>::max()) {
-            throw runtime_error("Invalid root degree");
-        }
-
-        return nthRoot(a, static_cast<int>(q));
+        return root; //return this branch
     }
-
-    if (current_val.type == TokenType::LeftParam) { //Parenthesiss
+    if (current_val.type == TokenType::LeftParam){ //parenthesis
         position++;
-        if (position < tokens.size() && tokens[position].type == TokenType::RightParam) {
+        if (position < tokens.size() && tokens[position].type == TokenType::RightParam) { //empty parenthesis
             throw runtime_error("Empty parenthesis");
         }
-        double result = parseExpression();
-        if(position >= tokens.size() || tokens[position].type != TokenType::RightParam){
-            throw runtime_error("No closing parenthesis");
-        } 
-        
-        position++;
-        return result;
+        auto result = parseExpression(); //Make the expression within the parenthesis
+        expect(TokenType::RightParam, "Expected ')'");
+        return result; //return this branch
     }
-    else if (current_val.type == TokenType::Number){ //Detected a number (lowest in the hierarchy)
-        double value = current_val.value;
+    if (current_val.type == TokenType::Number){ //Numbers
+        auto number = make_unique<Node>();
+        number->type = NodeType::Number;
+        number->value = current_val.value;
         position++;
-        return value;
+        return number; //return this leaf
     }
-    throw runtime_error("Expected a number");
+    throw runtime_error("Expected a number or expression");
 }
 
 
-double Parser::parseExponent() {
-    double left = parsePrimary();
+unique_ptr<Node> Parser::parseExponent() {
+    auto left = parsePrimary();
 
     if (position < tokens.size() && tokens[position].type == TokenType::Exponent) {
         position++;
 
-        double right = parseUnary();
+        auto right = parseUnary();
+        
+        auto root = make_unique<Node>();
+        root->type = NodeType::Exponent;
+        root->left = move(left);
+        root->right = move(right);
 
-        left = exponent(left, right);
+        return root;
     }
-
     return left;
 }
 
 
-double Parser::parseUnary() {
+unique_ptr<Node> Parser::parseUnary() {
     if (position >= tokens.size()) {
         throw runtime_error("Expected a number");
     }
 
     if (tokens[position].type == TokenType::Subtract) {
         position++;
-        return -parseUnary();
+        auto root = make_unique<Node>();
+        root->type = NodeType::Negate;
+
+        root->left = parseUnary();
+
+        return root;
     }
 
     return parseExponent();
 }
 
-
-double Parser::parseTerm() {
-    double left = parseUnary();
-
+unique_ptr<Node> Parser::parseTerm(){
+    auto left = parseUnary();
     while (position < tokens.size()) {
         TokenType op = tokens[position].type;
-
         if (op != TokenType::Multiply && op != TokenType::Divide) {
             break;
         }
-
         position++;
 
-        double right = parseUnary();
-        if (op == TokenType::Multiply){
-            left = mult(left, right);
+        auto right = parseUnary();
+        auto root = make_unique<Node>();
+        if (op == TokenType::Divide){
+            root->type = NodeType::Divide;
         }
-        else if (op == TokenType::Divide) {
-            left = divi(left, right);
+        else if (op == TokenType::Multiply) {
+            root->type = NodeType::Multiply;
         }
+        root->left = move(left);
+        root->right = move(right);
 
+        left = move(root);
     }
 
     return left;
 }
 
-double Parser::parseExpression() {
-    double left = parseTerm();
+unique_ptr<Node> Parser::parseExpression(){
+    auto left = parseTerm();
 
     while (position < tokens.size()) {
         TokenType op = tokens[position].type;
-
         if (op != TokenType::Plus && op != TokenType::Subtract) {
             break;
         }
         position++;
 
-        double right = parseTerm();
+        auto right = parseTerm();
+        auto root = make_unique<Node>();
         if (op == TokenType::Plus){
-            left = add(left, right);
+            root->type = NodeType::Add;
         }
         else if (op == TokenType::Subtract) {
-            left = sub(left, right);
+            root->type = NodeType::Subtract;
         }
+        root->left = move(left);
+        root->right = move(right);
 
+        left = move(root);
     }
 
     return left;
+
 }
 
-double Parser::parse() {
-    double result = parseExpression(); //Equate using recursion
+unique_ptr<Node> Parser::parse() {
+    auto result = parseExpression();
 
     if (position != tokens.size()) {
         if (tokens[position].type == TokenType::RightParam) {
             throw runtime_error("Missing opening parenthesis");
         }
+
         throw runtime_error("Unexpected token");
     }
 
