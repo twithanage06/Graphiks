@@ -1,6 +1,7 @@
 import math
 import subprocess
 from pathlib import Path
+from PIL import Image
 
 RED = "\033[31m"
 GREEN = "\033[32m"
@@ -86,8 +87,9 @@ test_cases = {
     "root(9,2.5)": "Invalid root degree",
     "root(9,2": "Expected ')' after root",
 }
-
+total_cases = 0
 for case, expected in test_cases.items():
+    total_cases += 1
     result = subprocess.run(
         [str(EXECUTABLE)],
         input=case + "\n",
@@ -132,9 +134,13 @@ for case, expected in test_cases.items():
         fail_msg(case, actual, expected)
 
 
-
 width = 20
 print("-" * width)
 print(f"| {GREEN}{f'Passes: {passes}':<{width-4}}{RESET} |")
 print(f"| {RED}{f'Errors: {errors}':<{width-4}}{RESET} |")
 print("-" * width)
+
+if passes == total_cases:
+    print(f"\n:D")
+else:
+    print(f"\n:C")
