@@ -1,19 +1,47 @@
 #include "parser.hpp"
 #include "evaluator.hpp"
-#include <stdexcept>
-#include <vector>
-#include <cstddef>
+
 
 using namespace std;
 
 Parser::Parser(const vector<Token>& tokens): tokens(tokens) {}
 
-double Parser::parseFactor(){
+void Parser::expect(TokenType type, const string& error) {
+    if (position >= tokens.size() || tokens[position].type != type) { 
+        throw runtime_error(error);
+    }
+
+    position++;
+}
+
+double Parser::parsePrimary(){
     if (position >= tokens.size()){
         throw runtime_error("Position greater than token length");
     }
 
     const Token& current_val = tokens[position];
+
+    if (current_val.type == TokenType::Root) {
+        position++;
+
+        expect(TokenType::LeftParam, "Expected '(' after root");
+
+        double a = parseExpression();
+
+        expect(TokenType::Comma, "Expected comma");
+
+        double q = parseExpression();
+
+        expect(TokenType::RightParam, "Expected ')' after root");
+
+        //Check for 1. valid number 2. Integer 3. can fit in a C++ int
+        if (!std::isfinite(q) || std::trunc(q) != q || q < std::numeric_limits<int>::min() || q > std::numeric_limits<int>::max()) {
+            throw runtime_error("Invalid root degree");
+        }
+
+        return nthRoot(a, static_cast<int>(q));
+    }
+
     if (current_val.type == TokenType::LeftParam) { //Parenthesiss
         position++;
         if (position < tokens.size() && tokens[position].type == TokenType::RightParam) {
@@ -27,10 +55,6 @@ double Parser::parseFactor(){
         position++;
         return result;
     }
-    else if (current_val.type == TokenType::Subtract) { //Negative sign
-        position++;
-        return -parseFactor();
-    }
     else if (current_val.type == TokenType::Number){ //Detected a number (lowest in the hierarchy)
         double value = current_val.value;
         position++;
@@ -41,12 +65,12 @@ double Parser::parseFactor(){
 
 
 double Parser::parseExponent() {
-    double left = parseFactor();
+    double left = parsePrimary();
 
     if (position < tokens.size() && tokens[position].type == TokenType::Exponent) {
         position++;
 
-        double right = parseExponent();
+        double right = parseUnary();
 
         left = exponent(left, right);
     }
@@ -54,8 +78,23 @@ double Parser::parseExponent() {
     return left;
 }
 
+
+double Parser::parseUnary() {
+    if (position >= tokens.size()) {
+        throw runtime_error("Expected a number");
+    }
+
+    if (tokens[position].type == TokenType::Subtract) {
+        position++;
+        return -parseUnary();
+    }
+
+    return parseExponent();
+}
+
+
 double Parser::parseTerm() {
-    double left = parseExponent();
+    double left = parseUnary();
 
     while (position < tokens.size()) {
         TokenType op = tokens[position].type;
@@ -66,7 +105,7 @@ double Parser::parseTerm() {
 
         position++;
 
-        double right = parseExponent();
+        double right = parseUnary();
         if (op == TokenType::Multiply){
             left = mult(left, right);
         }

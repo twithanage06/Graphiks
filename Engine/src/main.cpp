@@ -6,8 +6,10 @@ using namespace std;
 
 
 int main() {
+    
     string equation;;
     getline(cin,equation);
+
     try {
         vector<Token> tokens = tokenise(equation);
         Parser parser(tokens);

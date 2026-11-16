@@ -11,6 +11,11 @@ vector<Token> tokenise(const string& expression){
     char op;
     for (size_t i = 0; i < expression.length(); i++){
         char current_char = expression[i];
+        if (expression.compare(i, 4, "root") == 0) {
+            tokens.push_back({TokenType::Root});
+            i += 3;
+            continue;
+        }
         bool operator_flag = false;
         switch (current_char){
             case '+':
@@ -39,6 +44,10 @@ vector<Token> tokenise(const string& expression){
                 break;
             case ')':
                 op = ')';
+                operator_flag = true;
+                break;
+            case ',':
+                op = ',';
                 operator_flag = true;
                 break;
         }
@@ -73,6 +82,9 @@ vector<Token> tokenise(const string& expression){
                     break;
                 case ')':
                     tokens.push_back({TokenType::RightParam});
+                    break;
+                case ',':
+                    tokens.push_back({TokenType::Comma});
                     break;
             }
         }

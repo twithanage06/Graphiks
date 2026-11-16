@@ -13,6 +13,8 @@ enum class TokenType{
     Exponent,
     LeftParam,
     RightParam,
+    Root,
+    Comma,
     End
 };
 

@@ -9,9 +9,12 @@ BLUE = "\033[34m"
 RESET = "\033[0m"
 
 def fail_msg(inp, out, expected):
-    msg = f"{RED}FAILED!!!{RESET}\nEntered: {inp}\nExpected: {expected}\nGot: {out}"
-    print("-" * max(len(line) for line in msg.splitlines()))
-    print(f"\n{msg}\n")
+    msg = f"Entered: {inp}\nExpected: {expected}\nGot: {out}"
+    width = max(9, *(len(line) for line in msg.splitlines()))
+    print("-" * width)
+    print(f"{RED}FAILED!!!{RESET}")
+    print(msg)
+    print("-" * width)
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -58,12 +61,30 @@ test_cases = {
     "2^3": 8,
     "2^-3":(1/8),
     "-2^2":-4,
+    "(-2)^2": 4,
+    "(-2)^-2": 0.25,
     "-2^3":-8,
     "-2^-3":-(1/8),
+    "2^3^2": 512,
     "2^0":1,
     "0^2":0,
     "0^0":1,
-    "0^-2": "Division by zero"
+    "0^-2": "Division by zero",
+    # Roots
+    "root(9,2)": 3,
+    "root(8,3)": 2,
+    "root(81,4)": 3,
+    "root(16,-2)": 0.25,
+    "root(-8,3)": -2,
+    "root(8+19,3)": 3,
+    "root(2^6,3)": 4,
+    "root(root(256,2),2)": 4,
+
+    # Root errors
+    "root(-16,2)": "Even root of a negative number",
+    "root(9,0)": "Invalid root degree",
+    "root(9,2.5)": "Invalid root degree",
+    "root(9,2": "Expected ')' after root",
 }
 
 for case, expected in test_cases.items():
@@ -111,8 +132,9 @@ for case, expected in test_cases.items():
         fail_msg(case, actual, expected)
 
 
+
 width = 20
 print("-" * width)
-print(f"| {f'{GREEN}Passes:{RESET} {passes}':<{width-4}} |")
-print(f"| {f'{RED}Errors:{RESET} {errors}':<{width-4}} |")
+print(f"| {GREEN}{f'Passes: {passes}':<{width-4}}{RESET} |")
+print(f"| {RED}{f'Errors: {errors}':<{width-4}}{RESET} |")
 print("-" * width)
