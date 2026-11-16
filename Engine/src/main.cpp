@@ -6,18 +6,17 @@ using namespace std;
 
 
 int main() {
-    string equation;
-    cout << "Equation: " << endl;
-    cin >> equation;
-
-    vector<Token> tokens = tokenise(equation);
+    string equation;;
+    getline(cin,equation);
     try {
+        vector<Token> tokens = tokenise(equation);
         Parser parser(tokens);
         double result = parser.parse();
-        printf("Result: %g\n", result);
+        cout << result << endl;
     }
     catch (const std::exception& e){
         cerr << "Error: " << e.what() << endl;
+        return 1;
     }
 
 

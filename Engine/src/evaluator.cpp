@@ -27,7 +27,12 @@ double exponent( double a, double b){
         return result;
     }
     else if (a == 0){
-        return 0;
+        if (b > 0){
+            return 0;
+        }
+        else{
+            throw std::runtime_error("Division by zero");
+        }
     }
     else {
         if (b<0) {

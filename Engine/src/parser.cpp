@@ -17,7 +17,7 @@ double Parser::parseFactor(){
     if (current_val.type == TokenType::LeftParam) { //Parenthesiss
         position++;
         if (position < tokens.size() && tokens[position].type == TokenType::RightParam) {
-            throw runtime_error("Empty Parenthesis");
+            throw runtime_error("Empty parenthesis");
         }
         double result = parseExpression();
         if(position >= tokens.size() || tokens[position].type != TokenType::RightParam){
