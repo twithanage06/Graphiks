@@ -55,8 +55,8 @@ test_cases = {
     "(30+3)*4":132,
     "(30+3)/4":(33/4),
     "(30+3)/0": "Division by zero",
-    "(30+3": "No closing parenthesis",
-    "30+3)": "Missing opening parenthesis",
+    "(30+3": "Expected ')'",
+    "30+3)": "Expected '('",
     "()": "Empty parenthesis",
     #Exponent
     "2^3": 8,

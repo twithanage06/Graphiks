@@ -110,3 +110,40 @@ double nthRoot(double a, int q) {
     
     return nthRoot(a, q, guess, 0);
 }
+
+double evaluator(const Node& node){
+    if (node.type == NodeType::Number) {
+        return node.value;
+    }
+    if (node.type == NodeType::Negate) {
+        return -evaluator(*node.left);
+    }
+
+    if (!node.left || !node.right) {
+        throw std::runtime_error("Missing AST operand");
+    }
+
+    double left = evaluator(*node.left);
+    double right = evaluator(*node.right);
+
+    switch (node.type) {
+        case NodeType::Add:
+            return add(left,right);
+        case NodeType::Subtract:
+            return sub(left,right);
+        case NodeType::Multiply:
+            return mult(left,right);
+        case NodeType::Divide:
+            return divi(left,right);
+        case NodeType::Exponent:
+            return exponent(left,right);
+        case NodeType::Root:
+            if (!std::isfinite(right) || std::trunc(right) != right || right < std::numeric_limits<int>::min() || right > std::numeric_limits<int>::max()) {
+                throw std::runtime_error("Invalid root degree");
+            }
+            return nthRoot(left,right);
+        default:
+            throw std::runtime_error("Unknown AST node");
+    }
+
+}

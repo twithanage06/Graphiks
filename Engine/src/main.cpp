@@ -1,22 +1,24 @@
 #include <iostream>
 #include <vector>
 #include "parser.hpp"
+#include "evaluator.hpp"
 
 using namespace std;
 
 
 int main() {
     
-    string equation;;
+    string equation;
     getline(cin,equation);
 
     try {
         vector<Token> tokens = tokenise(equation);
         Parser parser(tokens);
-        double result = parser.parse();
-        cout << result << endl;
+        auto tree = parser.parse();
+        double result = evaluator(*tree);
+        cout << result << '\n';
     }
-    catch (const std::exception& e){
+    catch (const exception& e){
         cerr << "Error: " << e.what() << endl;
         return 1;
     }

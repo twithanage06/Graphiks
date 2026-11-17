@@ -157,7 +157,7 @@ unique_ptr<Node> Parser::parse() {
 
     if (position != tokens.size()) {
         if (tokens[position].type == TokenType::RightParam) {
-            throw runtime_error("Missing opening parenthesis");
+            throw runtime_error("Expected '('");
         }
 
         throw runtime_error("Unexpected token");
